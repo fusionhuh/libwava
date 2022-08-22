@@ -5,7 +5,7 @@ LIBS = -lm -lstdc++ `pkg-config --libs libpulse-simple` `pkg-config --libs fftw3
 INCLUDES = includes/
 DEPS = $(INCLUDES)/*.h
 DEPS := $(INCLUDES)/*.hpp
-OBJ = input/pulse.so input/common.so transform/wavatransform.so
+OBJ = input/common.so input/pulse.so transform/wavatransform.so 
 
 %.so: %.c $(DEPS)
 	$(CC) -I$(INCLUDES) $(CFLAGS) -fPIC -shared -c $< -o $@ $(LIBS)
@@ -16,7 +16,8 @@ OBJ = input/pulse.so input/common.so transform/wavatransform.so
 libwava.so: $(OBJ)
 	ld -r $^ -o $@ 
 
-install: libwava.so 
+install: libwava.so
+	chmod 0755 libwava.so 
 	mkdir -p $(PREFIX)/include/libwava
 	cp -rf includes/ $(PREFIX)/include/libwava
 	mv $(PREFIX)/include/libwava/includes/* $(PREFIX)/include/libwava/
@@ -26,7 +27,7 @@ install: libwava.so
 .PHONY: clean
 
 uninstall:
-	rm $(PREFIX)/lib/libwava.so
+	rm $(PREFIX)/lib/libwava.*
 	rm -rf $(PREFIX)/include/libwava
 clean:
-	rm -f $(OBJ) libwava.so
+	rm -f $(OBJ) libwava.so libwava.a
