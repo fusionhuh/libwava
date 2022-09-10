@@ -96,7 +96,7 @@ std::vector<double> calculate_hps(const std::vector<double>& magnitudes, int har
 	return hps_output;
 }
 
-int adjust_freq_to_note(double freq) { // currently having issues detecting octaves bc of noise gate, also has a hard time with standard A note
+int adjust_freq_to_note(double freq) { // currently having issues detecting octaves bc of noise gate
 	int note = -1;
 	if (freq > 0) {
 		while (freq > wava_plan::band_upper_cutoff_freq[14]) { freq *= 0.5; } // bring within note band ranges
