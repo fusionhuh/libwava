@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <pitch_detection.h>
+#include "util.h"
 
 #include <wavatransform.hpp>
 
@@ -159,13 +161,18 @@ std::vector<double> wava_execute(double* wava_in, int new_samples, wava_plan &pl
 	// Actually applying Hann Window
 	// again, only apply window to half of sample data because of padding
 	for (int i = 0; i < 8192; i++) {
-		plan.l_sample_data[i] = plan.hann_multiplier[i] * plan.l_sample_data_raw[i]; 
+		plan.l_sample_data[i] = plan.hann_multiplier[i] * plan.l_sample_data_raw[i];
 		if (plan.audio_channels == 2) plan.r_sample_data[i] = plan.hann_multiplier[i] * plan.r_sample_data_raw[i];
 	}
 
-	for (int i = 0; i < 8192; i++) {
-		plan.l_sample_data[i + 8192] = 0;
+	std::vector<double> audio_buffer(4046);
+
+	for (int i = 0; i < audio_buffer.size(); i++) {
+		audio_buffer[i] = plan.r_sample_data_raw[i];
 	}
+
+	double pitch_mpm = pitch::mpm<double>(audio_buffer, 44100);
+	double pitch_yin = pitch::yin<double>(audio_buffer, 44100);
 
 	// Execute FFT
 	fftw_execute(plan.plan_left);
@@ -173,7 +180,7 @@ std::vector<double> wava_execute(double* wava_in, int new_samples, wava_plan &pl
 
 	std::vector<double> wava_out(plan.freq_bands); 
 
-	for (int i = 0; i < (8192 + 1); i++) {
+	for (int i = 0; i < 8192; i++) {
 		plan.l_output_data_magnitude[i] = hypot(plan.l_output_data[i][0], plan.l_output_data[i][1]);
 		//if (plan.audio_channels == 2) plan.r_output_data_magnitude[i] = hypot(plan.r_output_data[i][0], plan.r_output_data[i][1]);
 	}
@@ -206,6 +213,8 @@ std::vector<double> wava_execute(double* wava_in, int new_samples, wava_plan &pl
 	}
 	
 	wava_out[0] = signal_energy/4;
+	wava_out[1] = pitch_mpm;
+	wava_out[2] = pitch_yin;
 
 	return wava_out;
 }
